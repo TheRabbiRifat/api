@@ -2,20 +2,22 @@ from flask import Flask, request, jsonify
 from pypdf import PdfReader
 import io
 import base64
+from PIL import Image
 
 app = Flask(__name__)
 
-# Route for checking if the application is running
+def get_image_format(image_data):
+    image = Image.open(io.BytesIO(image_data))
+    return image.format.lower()
+
 @app.route('/')
 def home():
     return "Flask app is running!"
 
-# Route for checking a simple JSON response
 @app.route('/check-json')
 def check_json():
     return jsonify({"status": "success", "message": "Flask app is running!"})
 
-# Route for extracting images from a PDF
 @app.route('/extract-images', methods=['POST'])
 def extract_images():
     if 'pdf' not in request.files:
@@ -31,13 +33,14 @@ def extract_images():
             image_io = io.BytesIO()
             image_io.write(image.data)
             image_io.seek(0)
+            image_format = get_image_format(image.data)
             image_base64 = base64.b64encode(image_io.getvalue()).decode('utf-8')
-            images.append(image_base64)
+            images.append(f"data:image/{image_format};base64,{image_base64}")
 
     if len(images) < 2:
         return jsonify({"error": "The PDF does not contain enough images"}), 400
 
-    # Send the first two images as Base64 encoded strings
+    # Prepare the images for the response
     response = {
         "photo": images[0],
         "sign": images[1]
