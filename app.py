@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 from pypdf import PdfReader
 import io
 import base64
@@ -10,9 +10,56 @@ def get_image_format(image_data):
     image = Image.open(io.BytesIO(image_data))
     return image.format.lower()
 
+
 @app.route('/')
 def home():
-    return "Flask app is running!"
+    html = '''
+    <html>
+    <head>
+        <meta http-equiv="refresh" content="5;url=https://puffin24.xyz">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                text-align: center;
+            }
+            .container {
+                background: #fff;
+                border-radius: 8px;
+                padding: 20px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                max-width: 500px;
+                width: 100%;
+            }
+            h1 {
+                font-size: 24px;
+                color: #333;
+                margin-bottom: 20px;
+            }
+            p {
+                font-size: 16px;
+                color: #555;
+                margin: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Proudly Served with Pie IT.</h1>
+            <p>You will be redirected shortly...</p>
+        </div>
+    </body>
+    </html>
+    '''
+    return render_template_string(html)
+
+
 
 @app.route('/check-json')
 def check_json():
