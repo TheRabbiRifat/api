@@ -4,6 +4,14 @@ import io
 
 app = Flask(__name__)
 
+@app.route('/')
+def index():
+    return "Flask app is running!"
+
+@app.route('/hello')
+def hello():
+    return jsonify({"message": "Hello, world!"})
+
 @app.route('/extract-images', methods=['POST'])
 def extract_images():
     # Check if the request contains a file
@@ -36,5 +44,3 @@ def extract_images():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=7777, debug=True)
-
-  
