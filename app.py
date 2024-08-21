@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template_string
 from pypdf import PdfReader
 import io
-import requests
+import base64
 from PIL import Image
 
 app = Flask(__name__)
@@ -10,19 +10,6 @@ def get_image_format(image_data):
     image = Image.open(io.BytesIO(image_data))
     return image.format.lower()
 
-def upload_to_postimage(image_data):
-    # Replace with the actual endpoint and parameters if different
-    api_url = "https://postimages.org/json/upload"
-    files = {'image': ('image', image_data)}
-    
-    # Perform the upload
-    response = requests.post(api_url, files=files)
-    
-    if response.status_code == 200:
-        data = response.json()
-        return data.get('url')  # Adjust based on the actual response field
-    else:
-        raise Exception(f"Failed to upload image. Status code: {response.status_code}")
 
 @app.route('/')
 def home():
@@ -72,6 +59,8 @@ def home():
     '''
     return render_template_string(html)
 
+
+
 @app.route('/check-json')
 def check_json():
     return jsonify({"status": "success", "message": "Flask app is running!"})
@@ -83,7 +72,7 @@ def extract_images():
 
     pdf_file = request.files['pdf']
     reader = PdfReader(pdf_file)
-    image_urls = []
+    images = []
 
     # Extract images from each page of the PDF
     for page in reader.pages:
@@ -92,21 +81,16 @@ def extract_images():
             image_io.write(image.data)
             image_io.seek(0)
             image_format = get_image_format(image.data)
+            image_base64 = base64.b64encode(image_io.getvalue()).decode('utf-8')
+            images.append(f"data:image/{image_format};base64,{image_base64}")
 
-            # Upload to PostImage and get URL
-            try:
-                image_url = upload_to_postimage(image_io.getvalue())
-                image_urls.append(image_url)
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-
-    if len(image_urls) < 2:
+    if len(images) < 2:
         return jsonify({"error": "The PDF does not contain enough images"}), 400
 
-    # Prepare the image URLs for the response
+    # Prepare the images for the response
     response = {
-        "photo": image_urls[0],
-        "sign": image_urls[1]
+        "photo": images[0],
+        "sign": images[1]
     }
     return jsonify(response)
 
